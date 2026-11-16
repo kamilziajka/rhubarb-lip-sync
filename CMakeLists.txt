@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.24)
 
 include(appInfo.cmake)
 
+# Support legacy OS X versions
+set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING "Minimum OS X deployment version")
+
 project(${appName})
 
 # Build and install main executable
