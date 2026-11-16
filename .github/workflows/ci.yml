@@ -14,8 +14,8 @@ jobs:
             cmakeOptions: '-G "Visual Studio 16 2019" -A x64'
             publish: true
           - description: macOS - Xcode
-            os: macos-13
-            cmakeOptions: ""
+            os: macos-15
+            cmakeOptions: '-D CMAKE_OSX_ARCHITECTURES="arm64;x86_64"'
             publish: true
           - description: Linux - GCC
             os: ubuntu-20.04
@@ -49,10 +49,16 @@ jobs:
           fi
           mkdir -p $BOOST_ROOT
           curl --insecure -L $BOOST_URL | tar -xj --strip-components=1 -C $BOOST_ROOT
+      - name: Install Java 11 on macOS
+        if: ${{ runner.os == 'macOS' }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "11"
       - name: Build Rhubarb
         shell: bash
         run: |
-          JAVA_HOME=$JAVA_HOME_11_X64
+          JAVA_HOME=${JAVA_HOME_11_X64:-${JAVA_HOME_11_arm64:-$JAVA_HOME}}
           mkdir build
           cd build
           cmake ${{ matrix.cmakeOptions }} ..
@@ -65,6 +71,16 @@ jobs:
           else
             ./build/rhubarb/runTests
           fi
+      - name: Check that the macOS binary is universal
+        if: ${{ runner.os == 'macOS' }}
+        shell: bash
+        run: |
+          mkdir package-check
+          unzip -q build/*.zip -d package-check
+          BINARY=$(find package-check -type f -name rhubarb -perm -u+x)
+          lipo -info "$BINARY"
+          lipo "$BINARY" -verify_arch arm64
+          lipo "$BINARY" -verify_arch x86_64
       - name: Upload artifacts
         if: ${{ matrix.publish }}
         uses: actions/upload-artifact@v4
