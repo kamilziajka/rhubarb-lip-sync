@@ -10,7 +10,7 @@ jobs:
       matrix:
         include:
           - description: macOS - Xcode
-            os: macos-15
+            os: macos-15-intel
             cmakeOptions: '-D CMAKE_OSX_ARCHITECTURES="arm64;x86_64"'
             publish: true
     env:
